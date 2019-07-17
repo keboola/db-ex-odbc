@@ -7,28 +7,40 @@ ENV COMPOSER_PROCESS_TIMEOUT 3600
 
 RUN apt-get update -q \
   && apt-get install -y --no-install-recommends \
-  unzip git apt-transport-https wget ssh libxml2-dev gnupg2 unixodbc-dev libgss3
+    unzip \
+    git \
+    ssh \
+    unixodbc \
+    unixodbc-dev \
+    libc6 \
+    libstdc++6 \
+    zlib1g \
+    libgcc1 \
+    expect
 
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
-  && curl https://packages.microsoft.com/config/debian/9/prod.list > /etc/apt/sources.list.d/mssql-release.list \
-  && apt-get update \
-  && ACCEPT_EULA=Y apt-get install -y msodbcsql17 mssql-tools
+RUN set -x \
+    && docker-php-source extract \
+    && cd /usr/src/php/ext/odbc \
+    && phpize \
+    && sed -ri 's@^ *test +"\$PHP_.*" *= *"no" *&& *PHP_.*=yes *$@#&@g' configure \
+    && ./configure --with-unixODBC=shared,/usr \
+    && docker-php-ext-install odbc \
+    && docker-php-source delete
 
-RUN pecl install pdo_sqlsrv sqlsrv \
-  && docker-php-ext-enable sqlsrv pdo_sqlsrv \
-  && docker-php-ext-install xml
-
-RUN echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc \
-  && /bin/bash -c "source ~/.bashrc"
-
-ENV PATH $PATH:/opt/mssql-tools/bin
+COPY docker/SQLServerODBCDriverforUnix.deb /tmp/odbc.deb
+#COPY docker/odbcinst.ini /etc/odbcinst.ini
+RUN dpkg -i /tmp/odbc.deb
+COPY docker/license /opt/cdata/cdata-odbc-driver-for-sql/bin/license
+WORKDIR /opt/cdata/cdata-odbc-driver-for-sql/bin/
+RUN ./license
+RUN odbcinst -q -d
 
 RUN echo "memory_limit = -1" >> /usr/local/etc/php/php.ini
 
 WORKDIR /root
 
 RUN curl -sS https://getcomposer.org/installer | php \
-  && mv composer.phar /usr/local/bin/composer
+  && mv composer.phar /usr/local/bin/composer && composer global require hirak/prestissimo
 
 WORKDIR /code
 
