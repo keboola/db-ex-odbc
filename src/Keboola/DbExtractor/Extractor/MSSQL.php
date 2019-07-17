@@ -6,9 +6,12 @@ namespace Keboola\DbExtractor\Extractor;
 
 use Keboola\DbExtractor\Exception\DeadConnectionException;
 use Symfony\Component\Process\Process;
+use Keboola\Csv\CsvFile;
 use Keboola\Csv\Exception as CsvException;
 use Keboola\DbExtractor\Exception\ApplicationException;
 use Keboola\DbExtractor\Exception\UserException;
+use Keboola\DbExtractor\Extractor\DbAdapter\MssqlOdbcStatement;
+use Keboola\DbExtractor\Extractor\DbAdapter\PdoInterface;
 use Keboola\DbExtractor\RetryProxy;
 
 class MSSQL extends Extractor
@@ -64,12 +67,12 @@ class MSSQL extends Extractor
         $host .= empty($params['instance']) ? '' : '\\\\' . $params['instance'];
         $options[] = 'Server=' . $host;
         $options[] = 'Database=' . $params['database'];
-        $dsn = sprintf("sqlsrv:%s", implode(';', $options));
+        $options[] = 'RTK=' . $params['rtk'];
+        $dsn = sprintf("DRIVER={CData ODBC Driver for SQL Server};%s", implode(';', $options));
         $this->logger->info("Connecting to DSN '" . $dsn . "'");
 
         // ms sql doesn't support options
         $pdo = new DbAdapter\MssqlAdapter($dsn, $params['user'], $params['password']);
-        $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
         return $pdo;
     }
 
@@ -131,7 +134,7 @@ class MSSQL extends Extractor
         );
         $stmt = $this->db->prepare($query);
         $stmt->execute($whereValues);
-        $lastDatetimeRow = $stmt->fetch(\PDO::FETCH_ASSOC);
+        $lastDatetimeRow = $stmt->fetch(PdoInterface::FETCH_ASSOC);
         return $lastDatetimeRow[$this->incrementalFetching['column']];
     }
 
@@ -241,7 +244,7 @@ class MSSQL extends Extractor
                     $query = $this->getSimplePdoQuery($table['table'], $columnMetadata);
                 }
                 $this->logger->info(sprintf("Executing \"%s\" via PDO", $query));
-                /** @var \PDOStatement $stmt */
+                /** @var MssqlOdbcStatement $stmt */
                 $stmt = $this->executeQuery(
                     $query,
                     isset($table['retries']) ? (int) $table['retries'] : self::DEFAULT_MAX_TRIES
@@ -254,7 +257,7 @@ class MSSQL extends Extractor
                 );
             }
             try {
-                $exportResult = $this->writeToCsv($stmt, $csv, $isAdvancedQuery);
+                $exportResult = $this->writeToCsvLocal($stmt, $csv, $isAdvancedQuery);
                 if ($exportResult['rows'] > 0) {
                     $this->createManifest($table);
                 } else {
@@ -302,9 +305,8 @@ class MSSQL extends Extractor
             rtrim(trim(str_replace("'", "''", $query)), ';')
         );
         try {
-            /** @var \PDOStatement $stmt */
             $stmt = $this->db->query($sql);
-            $result = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $result = $stmt->fetchAll(PdoInterface::FETCH_ASSOC);
             if (is_array($result) && !empty($result)) {
                 return array_map(
                     function ($row) {
@@ -569,5 +571,57 @@ class MSSQL extends Extractor
             return false;
         }
         return true;
+    }
+
+    /**
+     * @param PDOStatement $stmt
+     * @param CsvFile $csv
+     * @param boolean $includeHeader
+     * @return array ['rows', 'lastFetchedRow']
+     */
+    protected function writeToCsvLocal(MssqlOdbcStatement $stmt, CsvFile $csv, bool $includeHeader = true): array
+    {
+        $output = [];
+
+        $resultRow = $stmt->fetch(PdoInterface::FETCH_ASSOC);
+
+        if (is_array($resultRow) && !empty($resultRow)) {
+            // write header and first line
+            if ($includeHeader) {
+                $csv->writeRow(array_keys($resultRow));
+            }
+            $csv->writeRow($resultRow);
+
+            // write the rest
+            $numRows = 1;
+            $lastRow = $resultRow;
+
+            while ($resultRow = $stmt->fetch(PdoInterface::FETCH_ASSOC)) {
+                $csv->writeRow($resultRow);
+                $lastRow = $resultRow;
+                $numRows++;
+            }
+            $stmt->closeCursor();
+
+            if (isset($this->incrementalFetching['column'])) {
+                if (!array_key_exists($this->incrementalFetching['column'], $lastRow)) {
+                    throw new UserException(
+                        sprintf(
+                            "The specified incremental fetching column %s not found in the table",
+                            $this->incrementalFetching['column']
+                        )
+                    );
+                }
+                $output['lastFetchedRow'] = $lastRow[$this->incrementalFetching['column']];
+            }
+            $output['rows'] = $numRows;
+            return $output;
+        }
+        // no rows found.  If incremental fetching is turned on, we need to preserve the last state
+        if ($this->incrementalFetching['column'] && isset($this->state['lastFetchedRow'])) {
+            $output = $this->state;
+        }
+        $output['rows'] = 0;
+        return $output;
     }
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Keboola\DbExtractor\Tests;
 
+use Keboola\DbExtractor\Extractor\DbAdapter\MssqlAdapter;
+use Keboola\DbExtractor\Extractor\DbAdapter\PdoInterface;
 use Keboola\DbExtractor\MSSQLApplication;
 use Keboola\DbExtractor\Test\ExtractorTest;
 use Keboola\Csv\CsvFile;
@@ -13,7 +15,7 @@ abstract class AbstractMSSQLTest extends ExtractorTest
 {
     public const DRIVER = 'mssql';
 
-    /** @var \PDO */
+    /** @var PdoInterface */
     protected $pdo;
 
     /** @var string  */
@@ -38,12 +40,11 @@ abstract class AbstractMSSQLTest extends ExtractorTest
         }
 
         // create test database
-        $this->pdo = new \PDO(
-            sprintf("sqlsrv:Server=%s", $params['host']),
+        $this->pdo = new MssqlAdapter(
+            sprintf("DRIVER={CData ODBC Driver for SQL Server};Verbosity=5;Logfile=mssql.log;Server=%s", $params['host']),
             $params['user'],
             $params['password']
         );
-        $this->pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
 
         $this->pdo->exec("USE master");
         $this->pdo->exec(sprintf("
@@ -224,8 +225,9 @@ abstract class AbstractMSSQLTest extends ExtractorTest
                 $file->next();
 
                 $sql = sprintf(
-                    'INSERT INTO %s VALUES %s',
+                    'INSERT INTO %s (%s) VALUES %s',
                     $tableName,
+                    implode(', ', $file->getHeader()),
                     substr($sqlInserts, 0, -1)
                 );
 
