@@ -10,6 +10,8 @@
         }
     ],
     "require": {
+        "php": "7.2.*",
+        "ext-odbc": "*",
         "keboola/db-extractor-common": "^9.2",
         "keboola/php-utils": "^2.3.1"
     },
