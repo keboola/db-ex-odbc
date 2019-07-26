@@ -172,9 +172,12 @@ abstract class AbstractMSSQLTest extends ExtractorTest
                 $tableName,
                 implode(',', $primaryKey)
             );
-            $this->pdo->exec($sql);
+//            $this->pdo->exec($sql);
         }
 
+        $fileHeader = $file->getHeader();
+        $config = $this->getConfig(self::DRIVER);
+        $params = $config['parameters']['db'];
         $file->next();
 
         $this->pdo->beginTransaction();
@@ -184,8 +187,6 @@ abstract class AbstractMSSQLTest extends ExtractorTest
 
 
         while ($file->current() !== false) {
-            $sqlInserts = "";
-
             for ($i=0; $i<$rowsPerInsert && $file->current() !== false; $i++) {
                 $sqlInserts = "";
 
@@ -202,14 +203,14 @@ abstract class AbstractMSSQLTest extends ExtractorTest
                                     return "'" . $data . "'";
                                 }
 
-                                $nonDisplayables = array(
-                                '/%0[0-8bcef]/',            // url encoded 00-08, 11, 12, 14, 15
-                                '/%1[0-9a-f]/',             // url encoded 16-31
-                                '/[\x00-\x08]/',            // 00-08
-                                '/\x0b/',                   // 11
-                                '/\x0c/',                   // 12
-                                '/[\x0e-\x1f]/'             // 14-31
-                                );
+                                $nonDisplayables = [
+                                    '/%0[0-8bcef]/',            // url encoded 00-08, 11, 12, 14, 15
+                                    '/%1[0-9a-f]/',             // url encoded 16-31
+                                    '/[\x00-\x08]/',            // 00-08
+                                    '/\x0b/',                   // 11
+                                    '/\x0c/',                   // 12
+                                    '/[\x0e-\x1f]/'             // 14-31
+                                ];
                                 foreach ($nonDisplayables as $regex) {
                                     $data = preg_replace($regex, '', $data);
                                 }
@@ -222,16 +223,17 @@ abstract class AbstractMSSQLTest extends ExtractorTest
                         )
                     )
                 );
-                $file->next();
 
                 $sql = sprintf(
-                    'INSERT INTO %s (%s) VALUES %s',
+                    'INSERT INTO [%s].[dbo].%s (%s) VALUES %s',
+                    $params['database'],
                     $tableName,
-                    implode(', ', $file->getHeader()),
+                    implode(', ', $fileHeader),
                     substr($sqlInserts, 0, -1)
                 );
-
                 $this->pdo->exec($sql);
+
+                $file->next();
             }
         }
 
