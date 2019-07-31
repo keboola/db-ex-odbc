@@ -34,6 +34,7 @@ class MssqlOdbcStatement implements PdoStatementInterface
 
     public function fetch($fetchStyle = null, $cursor_orientation = PdoInterface::FETCH_ORI_NEXT, $cursor_offset = 0)
     {
+        $this->execute();
         if ($fetchStyle == PdoInterface::FETCH_ASSOC) {
             return odbc_fetch_array($this->stmt);
         } else {
@@ -63,17 +64,24 @@ class MssqlOdbcStatement implements PdoStatementInterface
 
     public function rowCount()
     {
-        throw new \Exception('Not implemented yet');
+        return odbc_num_rows();
     }
 
     public function fetchColumn($column_number = 0)
     {
-        throw new \Exception('Not implemented yet');
+        $this->execute();
+        $result = odbc_fetch_array($this->stmt);
+        return $result[odbc_field_name($this->stmt, $column_number + 1)];
     }
 
     public function fetchAll($fetch_style = null, $fetch_argument = null, array $ctor_args = [])
     {
-        throw new \Exception('Not implemented yet');
+        $this->execute();
+        $results = [];
+        while ($row = odbc_fetch_array($this->stmt)) {
+            $results[] = $row;
+        }
+        return $results;
     }
 
     public function fetchObject($class_name = "stdClass", array $ctor_args = [])
