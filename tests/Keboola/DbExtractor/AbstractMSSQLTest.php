@@ -74,6 +74,9 @@ abstract class AbstractMSSQLTest extends ExtractorTest
         $this->createTextTable($specialCsv, null, "special");
         // drop the t1 demo table if it exists
         $this->dropTable('t1');
+        // get dtb config
+        $config = $this->getConfig(self::DRIVER);
+        $params = $config['parameters']['db'];
 
         // set up a foreign key relationship
         $this->pdo->exec("ALTER TABLE sales2 ALTER COLUMN createdat varchar(64) NOT NULL");
@@ -96,13 +99,13 @@ abstract class AbstractMSSQLTest extends ExtractorTest
         );
         $this->pdo->exec("ALTER TABLE [auto Increment Timestamp] ADD CONSTRAINT PK_AUTOINC PRIMARY KEY (\"_Weir%d I-D\")");
         $this->pdo->exec("ALTER TABLE [auto Increment Timestamp] ADD CONSTRAINT CHK_ID_CONTSTRAINT CHECK (\"_Weir%d I-D\" > 0 AND \"_Weir%d I-D\" < 20)");
-        $this->pdo->exec("INSERT INTO [auto Increment Timestamp] (\"Weir%d Na-me\", Type, someInteger, someDecimal, smalldatetime) VALUES ('mario', 'plumber', 1, 1.1, '2012-01-10 10:00')");
-        $this->pdo->exec("INSERT INTO [auto Increment Timestamp] (\"Weir%d Na-me\", Type, someInteger, someDecimal, smalldatetime) VALUES ('luigi', 'plumber', 2, 2.2, '2012-01-10 10:05')");
-        $this->pdo->exec("INSERT INTO [auto Increment Timestamp] (\"Weir%d Na-me\", Type, someInteger, someDecimal, smalldatetime) VALUES ('toad', 'mushroom', 3, 3.3, '2012-01-10 10:10')");
-        $this->pdo->exec("INSERT INTO [auto Increment Timestamp] (\"Weir%d Na-me\", Type, someInteger, someDecimal, smalldatetime) VALUES ('princess', 'royalty', 4, 4.4, '2012-01-10 10:15')");
-        $this->pdo->exec("INSERT INTO [auto Increment Timestamp] (\"Weir%d Na-me\", Type, someInteger, someDecimal, smalldatetime) VALUES ('wario', 'badguy', 5, 5.5, '2012-01-10 10:25')");
+        $this->pdo->exec(sprintf("INSERT INTO %s.[dbo].[auto Increment Timestamp] (\"Weir%d Na-me\", Type, someInteger, someDecimal, smalldatetime) VALUES ('mario', 'plumber', 1, 1.1, '2012-01-10 10:00')", $params['database']));
+        $this->pdo->exec(sprintf("INSERT INTO %s.[dbo].[auto Increment Timestamp] (\"Weir%d Na-me\", Type, someInteger, someDecimal, smalldatetime) VALUES ('luigi', 'plumber', 2, 2.2, '2012-01-10 10:05')", $params['database']));
+        $this->pdo->exec(sprintf("INSERT INTO %s.[dbo].[auto Increment Timestamp] (\"Weir%d Na-me\", Type, someInteger, someDecimal, smalldatetime) VALUES ('toad', 'mushroom', 3, 3.3, '2012-01-10 10:10')", $params['database']));
+        $this->pdo->exec(sprintf("INSERT INTO %s.[dbo].[auto Increment Timestamp] (\"Weir%d Na-me\", Type, someInteger, someDecimal, smalldatetime) VALUES ('princess', 'royalty', 4, 4.4, '2012-01-10 10:15')", $params['database']));
+        $this->pdo->exec(sprintf("INSERT INTO %s.[dbo].[auto Increment Timestamp] (\"Weir%d Na-me\", Type, someInteger, someDecimal, smalldatetime) VALUES ('wario', 'badguy', 5, 5.5, '2012-01-10 10:25')", $params['database']));
         sleep(1); // stagger the timestamps
-        $this->pdo->exec("INSERT INTO [auto Increment Timestamp] (\"Weir%d Na-me\", Type, someInteger, someDecimal, smalldatetime) VALUES ('yoshi', 'horse?', 6, 6.6, '2012-01-10 10:25')");
+        $this->pdo->exec(sprintf("INSERT INTO %s.[dbo].[auto Increment Timestamp] (\"Weir%d Na-me\", Type, someInteger, someDecimal, smalldatetime) VALUES ('yoshi', 'horse?', 6, 6.6, '2012-01-10 10:25')", $params['database']));
         // add unique key
         $this->pdo->exec("ALTER TABLE [auto Increment Timestamp] ADD CONSTRAINT UNI_KEY_1 UNIQUE (\"Weir%d Na-me\", Type)");
     }
