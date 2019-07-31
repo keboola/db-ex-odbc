@@ -41,7 +41,7 @@ abstract class AbstractMSSQLTest extends ExtractorTest
 
         // create test database
         $this->pdo = new MssqlAdapter(
-            sprintf("DRIVER={CData ODBC Driver for SQL Server};Verbosity=5;Logfile=mssql.log;Server=%s", $params['host']),
+            sprintf("DRIVER={CData ODBC Driver for SQL Server};RTK=%s;Verbosity=5;Logfile=mssql.log;Server=%s", $params['RTK'], $params['host']),
             $params['user'],
             $params['password']
         );
@@ -127,6 +127,7 @@ abstract class AbstractMSSQLTest extends ExtractorTest
     {
         $config = parent::getConfig($driver, $format);
         $config['parameters']['extractor_class'] = 'MSSQL';
+        $config['parameters']['db']['RTK'] = $this->getEnv($driver, 'RTK_LICENSE');
         return $config;
     }
 
@@ -175,7 +176,7 @@ abstract class AbstractMSSQLTest extends ExtractorTest
                 $tableName,
                 implode(',', $primaryKey)
             );
-//            $this->pdo->exec($sql);
+            $this->pdo->exec($sql);
         }
 
         $fileHeader = $file->getHeader();
@@ -243,7 +244,7 @@ abstract class AbstractMSSQLTest extends ExtractorTest
         $this->pdo->commit();
 
         $count = $this->pdo->query(sprintf('SELECT COUNT(*) AS itemsCount FROM %s', $tableName))->fetchColumn();
-        $this->assertEquals($this->countTable($file), (int) $count);
+        $this->assertEquals((int) $this->countTable($file), (int) $count);
     }
 
     /**
