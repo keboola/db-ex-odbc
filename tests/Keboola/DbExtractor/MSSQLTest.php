@@ -1518,6 +1518,7 @@ class MSSQLTest extends AbstractMSSQLTest
         // check the data
         $expectedData = iterator_to_array(new CsvFile($this->dataDir.'/mssql/columnsOrderCheck.csv'));
         $outputData = iterator_to_array(new CsvFile($this->dataDir.'/out/tables/in.c-main.columnscheck.csv'));
+        array_shift($outputData);
         foreach ($outputData as $rowNum => $line) {
             // assert timestamp
             $this->assertEquals($line[0], $expectedData[$rowNum][0]);
@@ -1531,7 +1532,7 @@ class MSSQLTest extends AbstractMSSQLTest
         $this->dropTable("XML_TEST");
         $this->pdo->exec("CREATE TABLE [XML_TEST] ([ID] INT NOT NULL, [XML_COL] XML NULL);");
         $this->pdo->exec(
-            "INSERT INTO [XML_TEST] VALUES (1, '<test>some test xml </test>'), (2, null), (3, '<test>some test xml </test>')"
+            "INSERT INTO [test].[dbo].[XML_TEST] VALUES (1, '<test>some test xml </test>'), (2, null), (3, '<test>some test xml </test>')"
         );
         $config = $this->getConfig('mssql');
         unset($config['parameters']['tables'][1]);
@@ -1550,15 +1551,15 @@ class MSSQLTest extends AbstractMSSQLTest
 
     public function testStripNulls(): void
     {
+        $config = $this->getConfig('mssql');
         $this->dropTable("NULL_TEST");
         $this->pdo->exec("CREATE TABLE [NULL_TEST] ([ID] VARCHAR(5) NULL, [NULL_COL] NVARCHAR(10) DEFAULT '', [col2] VARCHAR(55));");
         $this->pdo->exec(
-            "INSERT INTO [NULL_TEST] VALUES 
+            "INSERT INTO {$config['parameters']['db']['database']}.[dbo].[NULL_TEST] ([ID], [NULL_COL], [col2]) VALUES 
             ('', '', 'test with ' + CHAR(0) + ' inside'), 
             ('', '', ''), 
             ('3', '', 'test')"
         );
-        $config = $this->getConfig('mssql');
         unset($config['parameters']['tables'][1]);
         unset($config['parameters']['tables'][2]);
         unset($config['parameters']['tables'][3]);
@@ -1569,6 +1570,7 @@ class MSSQLTest extends AbstractMSSQLTest
         $result = $this->createApplication($config)->run();
 
         $outputData = iterator_to_array(new CsvFile($this->dataDir . '/out/tables/in.c-main.null_test.csv'));
+        array_shift($outputData);
 
         $this->assertNotContains(chr(0), $outputData[0][0]);
         $this->assertNotContains(chr(0), $outputData[0][1]);
