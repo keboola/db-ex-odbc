@@ -16,27 +16,7 @@ RUN apt-get update -q \
     libstdc++6 \
     zlib1g \
     libgcc1 \
-    expect \
-    gnupg2 \
-    apt-transport-https \
-    wget \
-    ssh \
-    libxml2-dev \
-    libgss3
-
-RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
-  && curl https://packages.microsoft.com/config/debian/9/prod.list > /etc/apt/sources.list.d/mssql-release.list \
-  && apt-get update \
-  && ACCEPT_EULA=Y apt-get install -y msodbcsql17 mssql-tools
-
-RUN pecl install pdo_sqlsrv sqlsrv \
-  && docker-php-ext-enable sqlsrv pdo_sqlsrv \
-  && docker-php-ext-install xml
-
-RUN echo 'export PATH="$PATH:/opt/mssql-tools/bin"' >> ~/.bashrc \
-  && /bin/bash -c "source ~/.bashrc"
-
-ENV PATH $PATH:/opt/mssql-tools/bin
+    expect
 
 RUN set -x \
     && docker-php-source extract \
@@ -60,7 +40,7 @@ RUN echo "memory_limit = -1" >> /usr/local/etc/php/php.ini
 WORKDIR /root
 
 RUN curl -sS https://getcomposer.org/installer | php \
-  && mv composer.phar /usr/local/bin/composer
+  && mv composer.phar /usr/local/bin/composer && composer global require hirak/prestissimo
 
 WORKDIR /code
 
