@@ -26,6 +26,7 @@ class MssqlConfigurationRowDefinition extends ConfigRowDefinition
                 ->arrayNode('db')
                     ->children()
                         ->scalarNode('driver')->end()
+                        ->scalarNode('rtk')->end()
                         ->scalarNode('host')->end()
                         ->scalarNode('port')->end()
                         ->scalarNode('database')->end()
