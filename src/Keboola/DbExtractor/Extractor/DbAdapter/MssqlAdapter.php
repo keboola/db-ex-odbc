@@ -53,6 +53,7 @@ class MssqlAdapter implements PdoInterface
         // get the MSSQL Server version (note, 2008 is version 10.*
         $res = $this->query("SELECT SERVERPROPERTY('ProductVersion') AS version;");
 
+        $res->execute();
         $versionString = $res->fetch(PdoInterface::FETCH_ASSOC);
         if (!isset($versionString['version'])) {
             throw new UserException("Unable to get SQL Server Version Information");
@@ -93,7 +94,7 @@ class MssqlAdapter implements PdoInterface
     public function exec($statement)
     {
         $stmt = $this->query($statement);
-        var_dump($statement);
+//        var_dump($statement);
         $stmt->execute();
     }
 
