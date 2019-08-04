@@ -34,7 +34,6 @@ class MssqlOdbcStatement implements PdoStatementInterface
 
     public function fetch($fetchStyle = null, $cursor_orientation = PdoInterface::FETCH_ORI_NEXT, $cursor_offset = 0)
     {
-        $this->execute();
         if ($fetchStyle == PdoInterface::FETCH_ASSOC) {
             return odbc_fetch_array($this->stmt);
         } else {
