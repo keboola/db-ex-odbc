@@ -150,146 +150,15 @@ class MSSQL extends Extractor
 
     public function export(array $table): array
     {
-        $outputTable = $table['outputTable'];
-        $csv = $this->createOutputCsv($outputTable);
-
-        $this->logger->info("Exporting to " . $outputTable);
-
-        $columns = $table['columns'];
-        $isAdvancedQuery = true;
-        $columnMetadata = [];
-        if (array_key_exists('table', $table) && !array_key_exists('query', $table)) {
-            $isAdvancedQuery = false;
-            $tableMetadata = $this->getTables([$table['table']]);
-            if (count($tableMetadata) === 0) {
-                throw new UserException(sprintf(
-                    "Could not find the table: [%s].[%s]",
-                    $table['table']['schema'],
-                    $table['table']['tableName']
-                ));
-            }
-            $tableMetadata = $tableMetadata[0];
-            $columnMetadata = $tableMetadata['columns'];
-            if (count($columns) > 0) {
-                $columnMetadata = array_filter($columnMetadata, function ($columnMeta) use ($columns) {
-                    return in_array($columnMeta['name'], $columns);
-                });
-                $colOrder = array_flip($columns);
-                usort($columnMetadata, function (array $colA, array $colB) use ($colOrder) {
-                    return $colOrder[$colA['name']] - $colOrder[$colB['name']];
-                });
-            }
-            $table['table']['nolock'] = $table['nolock'];
-            $query = $this->simpleQuery($table['table'], $columnMetadata);
-        } else {
-            $query = $table['query'];
+        $export = parent::export($table);
+        if (!array_key_exists('table', $table) && array_key_exists('query', $table)) {
+            $manifestFile = $this->getOutputFilename($table['outputTable']) . '.manifest';
+            $manifest = json_decode(file_get_contents($manifestFile), true);
+            $manifest['columns'] = $this->getAdvancedQueryColumns($table['query']);
+            file_put_contents($manifestFile, json_encode($manifest));
+            $this->stripNullBytesInEmptyFields($this->getOutputFilename($table['outputTable']));
         }
-        $this->logger->debug("Executing query: " . $query);
-
-        try {
-            if ($isAdvancedQuery && $this->sqlServerVersion < 11) {
-                throw new UserException("BCP is not supported for advanced queries in sql server 2008 or less.");
-            }
-            $this->logger->info("BCP export started");
-            $bcp = new BCP($this->getDbParameters(), $this->logger);
-            $exportResult = $bcp->export($query, (string) $csv);
-            if ($exportResult['rows'] === 0) {
-                // BCP will create an empty file for no rows case
-                @unlink((string) $csv);
-                // no rows found.  If incremental fetching is turned on, we need to preserve the last state
-                if ($this->incrementalFetching['column'] && isset($this->state['lastFetchedRow'])) {
-                    $exportResult['lastFetchedRow'] = $this->state['lastFetchedRow'];
-                }
-                $this->logger->warning(sprintf(
-                    "[%s]: Query returned empty result so nothing was imported",
-                    $outputTable
-                ));
-            } else {
-                $this->createManifest($table);
-                if ($isAdvancedQuery) {
-                    $manifestFile = $this->getOutputFilename($table['outputTable']) . '.manifest';
-                    $columnsArray = $this->getAdvancedQueryColumns($query);
-                    $manifest = json_decode(file_get_contents($manifestFile), true);
-                    $manifest['columns'] = $columnsArray;
-                    file_put_contents($manifestFile, json_encode($manifest));
-                    $this->stripNullBytesInEmptyFields($this->getOutputFilename($table['outputTable']));
-                } else if (isset($this->incrementalFetching['column'])) {
-                    if ($this->incrementalFetching['type'] === self::INCREMENT_TYPE_DATETIME) {
-                        $exportResult['lastFetchedRow'] = $this->getLastFetchedDatetimeValue(
-                            $exportResult['lastFetchedRow'],
-                            $table['table'],
-                            $columnMetadata
-                        );
-                    } else {
-                        $exportResult['lastFetchedRow'] = $this->getLastFetchedId(
-                            $columnMetadata,
-                            $exportResult['lastFetchedRow']
-                        );
-                    }
-                }
-            }
-        } catch (\Throwable $e) {
-            if ($table['disableFallback']) {
-                throw $e;
-            }
-            $this->logger->info(
-                sprintf(
-                    "[%s]: The BCP export failed: %s. Attempting export using pdo_sqlsrv.",
-                    $outputTable,
-                    $e->getMessage()
-                )
-            );
-            try {
-                if (!$isAdvancedQuery) {
-                    $query = $this->getSimplePdoQuery($table['table'], $columnMetadata);
-                }
-                $this->logger->info(sprintf("Executing \"%s\" via PDO", $query));
-                /** @var MssqlOdbcStatement $stmt */
-                $stmt = $this->executeQuery(
-                    $query,
-                    isset($table['retries']) ? (int) $table['retries'] : self::DEFAULT_MAX_TRIES
-                );
-            } catch (\Exception $e) {
-                throw new UserException(
-                    sprintf("[%s]: DB query failed: %s.", $outputTable, $e->getMessage()),
-                    0,
-                    $e
-                );
-            }
-            try {
-                $exportResult = $this->writeToCsvLocal($stmt, $csv, $isAdvancedQuery);
-                if ($exportResult['rows'] > 0) {
-                    $this->createManifest($table);
-                } else {
-                    if ($this->incrementalFetching['column'] && isset($this->state['lastFetchedRow'])) {
-                        $exportResult['lastFetchedRow'] = $this->state['lastFetchedRow'];
-                    }
-                    $this->logger->warning(sprintf(
-                        "[%s]: Query returned empty result so nothing was imported",
-                        $outputTable
-                    ));
-                    @unlink((string) $csv);
-                }
-            } catch (CsvException $e) {
-                throw new ApplicationException("Write to CSV failed: " . $e->getMessage(), 0, $e);
-            } catch (\PDOException $PDOException) {
-                throw new UserException(
-                    "Failed to retrieve results: " . $PDOException->getMessage() . " Code:" . $PDOException->getCode(),
-                    0,
-                    $PDOException
-                );
-            }
-        }
-
-        $output = [
-            "outputTable"=> $outputTable,
-            "rows" => $exportResult['rows'],
-        ];
-        // output state
-        if (isset($exportResult['lastFetchedRow']) && !is_array($exportResult['lastFetchedRow'])) {
-            $output["state"]['lastFetchedRow'] = $exportResult['lastFetchedRow'];
-        }
-        return $output;
+        return $export;
     }
 
     /**
@@ -301,7 +170,7 @@ class MSSQL extends Extractor
     {
         // This will only work if the server is >= sql server 2012
         $sql = sprintf(
-            "EXEC sp_describe_first_result_set N'%s', null, 0;",
+            "SELECT name, system_type_name FROM sys.dm_exec_describe_first_result_set('%s', null, 1);",
             rtrim(trim(str_replace("'", "''", $query)), ';')
         );
         try {
@@ -385,23 +254,32 @@ class MSSQL extends Extractor
             );
         }
 
-        $query = sprintf(
-            "%s %s FROM %s.%s",
-            $queryStart,
-            implode(
-                ', ',
-                array_map(
-                    function (array $column): string {
-                        return $this->columnToBcpSql($column);
-                    },
-                    $columns
-                )
-            ),
-            $this->db->quoteIdentifier($table['schema']),
-            $this->db->quoteIdentifier($table['tableName'])
-        );
+        if (count($columns) > 0) {
+            $query = sprintf(
+                "%s %s FROM %s.%s",
+                $queryStart,
+                implode(
+                    ', ',
+                    array_map(
+                        function ($column): string {
+                            return $this->db->quoteIdentifier($column);
+                        },
+                        $columns
+                    )
+                ),
+                $this->db->quoteIdentifier($table['schema']),
+                $this->db->quoteIdentifier($table['tableName'])
+            );
+        } else {
+            $query = sprintf(
+                "%s * FROM %s.%s",
+                $queryStart,
+                $this->db->quoteIdentifier($table['schema']),
+                $this->db->quoteIdentifier($table['tableName'])
+            );
+        }
 
-        if ($table['nolock']) {
+        if (isset($table['nolock']) && $table['nolock']) {
             $query .= " WITH(NOLOCK)";
         }
         $incrementalAddon = $this->getIncrementalQueryAddon();
