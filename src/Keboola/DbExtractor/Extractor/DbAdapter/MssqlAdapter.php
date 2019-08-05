@@ -29,9 +29,9 @@ class MssqlAdapter implements PdoInterface
     public function query($statement, $bind = [], $mode = 19, $arg3 = null, array $ctorargs = []): MssqlOdbcStatement
     {
         try {
-            $stmt = odbc_prepare($this->connection, $statement);
-            return new MssqlOdbcStatement($stmt);
+            return $this->prepare($statement);
         } catch (\Throwable $e) {
+            var_dump($statement);
             throw new ApplicationException($e->getMessage(), 0, $e);
         }
     }

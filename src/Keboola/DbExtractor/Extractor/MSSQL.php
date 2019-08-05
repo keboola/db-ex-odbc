@@ -153,10 +153,12 @@ class MSSQL extends Extractor
         $export = parent::export($table);
         if (!array_key_exists('table', $table) && array_key_exists('query', $table)) {
             $manifestFile = $this->getOutputFilename($table['outputTable']) . '.manifest';
-            $manifest = json_decode(file_get_contents($manifestFile), true);
-            $manifest['columns'] = $this->getAdvancedQueryColumns($table['query']);
-            file_put_contents($manifestFile, json_encode($manifest));
-            $this->stripNullBytesInEmptyFields($this->getOutputFilename($table['outputTable']));
+            if (file_exists($manifestFile)) {
+                $manifest = json_decode(file_get_contents($manifestFile), true);
+                $manifest['columns'] = $this->getAdvancedQueryColumns($table['query']);
+                file_put_contents($manifestFile, json_encode($manifest));
+                $this->stripNullBytesInEmptyFields($this->getOutputFilename($table['outputTable']));
+            }
         }
         return $export;
     }

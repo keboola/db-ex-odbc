@@ -37,24 +37,6 @@ class ExtractorTest extends AbstractMSSQLTest
     }
 
     /**
-     * @dataProvider bcpTableColumnsDataProvider
-     */
-    public function testGetBCPQuery(array $params, array $state, string $expected): void
-    {
-        $extractor = new MSSQL($this->config['parameters'], $state, new Logger('mssql-extractor-test'));
-
-        if (isset($params['incrementalFetchingColumn']) && $params['incrementalFetchingColumn'] !== "") {
-            $extractor->validateIncrementalFetching(
-                $params['table'],
-                $params['incrementalFetchingColumn'],
-                isset($params['incrementalFetchingLimit']) ? $params['incrementalFetchingLimit'] : null
-            );
-        }
-        $query = $extractor->simpleQuery($params['table'], $params['columns'] ?? []);
-        $this->assertEquals($expected, $query);
-    }
-
-    /**
      * @dataProvider columnTypeProvider
      * @param array $column
      * @param array $sxpectedSql

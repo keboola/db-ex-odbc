@@ -140,8 +140,8 @@ class ApplicationTest extends AbstractMSSQLTest
 
         $this->assertEquals(0, $process->getExitCode());
         $this->assertEquals("", $process->getErrorOutput());
-        // verify that the bcp command uses the proxy
-        $this->assertContains("-S \"127.0.0.1,1234\"", $process->getOutput());
+        // verify that the command uses the proxy
+        $this->assertContains("Server=127.0.0.1,1234", $process->getOutput());
 
         $outputCsvData1 = iterator_to_array(new CsvFile($outputCsvFile1));
         $outputCsvData2 = iterator_to_array(new CsvFile($outputCsvFile2));
@@ -205,67 +205,7 @@ class ApplicationTest extends AbstractMSSQLTest
 
         $this->assertContains("[in.c-main.special]: DB query failed:", $process->getErrorOutput());
 
-        $this->assertContains("The BCP export failed:", $process->getOutput());
-        $this->assertContains("Attempting export using pdo", $process->getOutput());
-    }
-
-    public function testPdoFallback(): void
-    {
-        $config = $this->getConfig('mssql');
-        unset($config['parameters']['tables'][1]);
-        unset($config['parameters']['tables'][2]);
-        unset($config['parameters']['tables'][3]);
-        $config['parameters']['tables'][0]['query'] = "SELECT *  FROM \"special\";";
-
-        $this->replaceConfig($config, self::CONFIG_FORMAT_YAML);
-
-        $process = new Process('php ' . $this->rootPath . '/src/run.php --data=' . $this->dataDir);
-        $process->setTimeout(300);
-        $process->run();
-
-        $output = $process->getOutput() . "\n" . $process->getErrorOutput();
-
-        $this->assertEquals(0, $process->getExitCode(), $output);
-        $this->assertEquals('', $process->getErrorOutput());
-
-        $this->assertContains("The BCP export failed:", $process->getOutput());
-        $this->assertContains("Attempting export using pdo", $process->getOutput());
-    }
-
-    public function testDisableFallback(): void
-    {
-        $config = $this->getConfig('mssql');
-        unset($config['parameters']['tables'][1]);
-        unset($config['parameters']['tables'][2]);
-        unset($config['parameters']['tables'][3]);
-        $config['parameters']['tables'][0]['query'] = "SELECT *  FROM \"special\";";
-        $config['parameters']['tables'][0]['disableFallback'] = true;
-
-        $this->replaceConfig($config, self::CONFIG_FORMAT_YAML);
-
-        $process = new Process('php ' . $this->rootPath . '/src/run.php --data=' . $this->dataDir);
-        $process->setTimeout(300);
-        $process->run();
-
-        $this->assertEquals(1, $process->getExitCode());
-        $this->assertEquals("The BCP command produced an invalid csv.\n", $process->getErrorOutput());
-    }
-
-    public function testDisableFallbackConfigRow(): void
-    {
-        $config = $this->getConfigRow(self::DRIVER);
-        unset($config['parameters']['table']);
-        $config['parameters']['query'] = "SELECT *  FROM \"special\";";
-        $config['parameters']['disableFallback'] = true;
-
-        $this->replaceConfig($config, self::CONFIG_FORMAT_JSON);
-
-        $process = new Process('php ' . $this->rootPath . '/src/run.php --data=' . $this->dataDir);
-        $process->setTimeout(300);
-        $process->run();
-
-        $this->assertEquals(1, $process->getExitCode());
-        $this->assertEquals("The BCP command produced an invalid csv.\n", $process->getErrorOutput());
+        $this->assertContains("odbc_prepare(): SQL error:", $process->getOutput());
     }
 
     public function testWhereClauseWithSingleQuotes(): void
@@ -287,11 +227,10 @@ class ApplicationTest extends AbstractMSSQLTest
         $this->assertEquals(0, $process->getExitCode(), $output);
         $this->assertEquals('', $process->getErrorOutput());
 
-        $this->assertContains("BCP successfully exported", $process->getOutput());
-        $this->assertNotContains("The BCP export failed:", $process->getOutput());
+        $this->assertContains("Extractor finished successfully.", $process->getOutput());
     }
 
-    public function testPDOFallbackSimpleNoData(): void
+    public function testFallbackSimpleNoData(): void
     {
         $this->pdo->exec("CREATE TABLE [Empty Test] ([wierd C\$name] varchar, col2 varchar);");
         $config = $this->getConfig('mssql');
@@ -318,25 +257,22 @@ class ApplicationTest extends AbstractMSSQLTest
         $process->run();
 
         $this->assertEquals(0, $process->getExitCode());
-        $this->assertContains('[in.c-main.simple_empty]: Query returned empty result so nothing was imported', $process->getErrorOutput());
-
-        $this->assertContains("[in.c-main.simple_empty]: The BCP export failed:", $process->getOutput());
-        $this->assertContains("Attempting export using pdo", $process->getOutput());
+        $this->assertContains('Query returned empty result. Nothing was imported to [in.c-main.simple_empty]', $process->getErrorOutput());
 
         $this->assertFileNotExists($dataFile);
         $this->assertFileNotExists($manifestFile);
     }
 
-    public function testSimplifiedPdoFallbackQuery(): void
+    public function testSimplifiedFallbackQuery(): void
     {
+        $config = $this->getConfig('mssql');
         $this->dropTable("PDO_TEST");
         $this->pdo->exec("CREATE TABLE [PDO_TEST] ([ID] INT NULL, [PROB_COL] sql_variant DEFAULT null);");
         $this->pdo->exec(
-            "INSERT INTO [PDO_TEST] VALUES 
+            "INSERT INTO {$config['parameters']['db']['database']}.dbo.[PDO_TEST] VALUES 
             ('', GETDATE()), 
             ('', null)"
         );
-        $config = $this->getConfig('mssql');
         unset($config['parameters']['tables'][1]);
         unset($config['parameters']['tables'][2]);
         unset($config['parameters']['tables'][3]);
@@ -352,21 +288,21 @@ class ApplicationTest extends AbstractMSSQLTest
         $process->run();
 
         $this->assertEquals(0, $process->getExitCode());
-        $this->assertContains("Executing \"SELECT [ID], [PROB_COL] FROM [dbo].[PDO_TEST]\" via PDO", $process->getOutput());
+        $this->assertContains("Extractor finished successfully.", $process->getOutput());
 
         $this->dropTable("PDO_TEST");
     }
 
     public function testSmallDateTime(): void
     {
+        $config = $this->getConfig('mssql');
         $this->dropTable("SMALLDATETIME_TEST");
         $this->pdo->exec("CREATE TABLE [SMALLDATETIME_TEST] ([ID] INT NULL, [SMALLDATE] SMALLDATETIME NOT NULL);");
         $this->pdo->exec(
-            "INSERT INTO [SMALLDATETIME_TEST] VALUES 
+            "INSERT INTO {$config['parameters']['db']['database']}.dbo.[SMALLDATETIME_TEST] VALUES 
             (1, GETDATE()),
             (2, GETDATE())"
         );
-        $config = $this->getConfig('mssql');
         unset($config['parameters']['tables'][1]);
         unset($config['parameters']['tables'][2]);
         unset($config['parameters']['tables'][3]);
@@ -381,7 +317,7 @@ class ApplicationTest extends AbstractMSSQLTest
         $process->setTimeout(300);
         $process->mustRun();
 
-        $this->assertContains("SELECT [ID], [SMALLDATE] FROM [dbo].[SMALLDATETIME_TEST]", $process->getOutput());
+        $this->assertContains("Extractor finished successfully.", $process->getOutput());
         $this->assertNotContains("CONVERT(DATETIME2(0),[SMALLDATE])", $process->getOutput());
         $this->dropTable("SMALLDATETIME_TEST");
     }
@@ -433,13 +369,9 @@ class ApplicationTest extends AbstractMSSQLTest
         $process->setTimeout(300);
         $process->mustRun();
 
-        $this->assertNotContains(
-            "The BCP export failed: SQLSTATE[42000]: [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]Implicit conversion from data type nvarchar to timestamp is not allowed.",
-            $process->getOutput()
-        );
         $this->assertFileExists($this->dataDir . '/out/state.json');
         $state = json_decode(file_get_contents($this->dataDir . "/out/state.json"), true);
-        $this->assertLessThanOrEqual(2, time() - strtotime($state['lastFetchedRow']));
+        $this->assertLessThanOrEqual(4, time() - strtotime($state['lastFetchedRow']));
     }
 
     public function testIncrementalFetchingWithNullSmalldatetimeValues(): void
@@ -474,7 +406,11 @@ class ApplicationTest extends AbstractMSSQLTest
         unlink($outputFile);
         sleep(2);
         //now add a couple rows and run it again.
-        $this->pdo->exec('INSERT INTO [auto Increment Timestamp] ([Weir%d Na-me], [smalldatetime]) VALUES (\'charles\', null), (\'william\', \'2012-01-10 10:55\')');
+        $this->pdo->exec(sprintf(
+                'INSERT INTO %s.dbo.[auto Increment Timestamp] ([Weir%%d Na-me], [smalldatetime]) VALUES (\'charles\', null), (\'william\', \'2012-01-10 10:55\')',
+                $config['parameters']['db']['database']
+            )
+        );
 
         if (!is_dir($this->dataDir . '/in')) {
             mkdir($this->dataDir . '/in');
@@ -486,11 +422,6 @@ class ApplicationTest extends AbstractMSSQLTest
         $process = new Process('php ' . $this->rootPath . '/src/run.php --data=' . $this->dataDir);
         $process->setTimeout(300);
         $process->mustRun();
-
-        $this->assertNotContains(
-            "The BCP export failed",
-            $process->getOutput()
-        );
 
         //check that output state contains expected information (will contain the same last 2 rows as above, + 2 more
         $state = json_decode(file_get_contents($this->dataDir . "/out/state.json"), true);

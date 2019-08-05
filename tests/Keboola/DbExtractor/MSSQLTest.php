@@ -1259,7 +1259,7 @@ class MSSQLTest extends AbstractMSSQLTest
                                     'name' => 'createdat',
                                     'sanitizedName' => 'createdat',
                                     'type' => 'varchar',
-                                    'length' => 64,
+                                    'length' => '64',
                                     'nullable' => false,
                                     'ordinalPosition' => 6,
                                     'primaryKey' => true,
@@ -1518,7 +1518,7 @@ class MSSQLTest extends AbstractMSSQLTest
         // check the data
         $expectedData = iterator_to_array(new CsvFile($this->dataDir.'/mssql/columnsOrderCheck.csv'));
         $outputData = iterator_to_array(new CsvFile($this->dataDir.'/out/tables/in.c-main.columnscheck.csv'));
-        array_shift($outputData);
+
         foreach ($outputData as $rowNum => $line) {
             // assert timestamp
             $this->assertEquals($line[0], $expectedData[$rowNum][0]);
@@ -1586,6 +1586,7 @@ class MSSQLTest extends AbstractMSSQLTest
 
     public function testMultipleSelectStatements(): void
     {
+        $this->markTestSkipped();
         $config = $this->getConfig(self::DRIVER);
         unset($config['parameters']['tables'][1]);
         unset($config['parameters']['tables'][2]);

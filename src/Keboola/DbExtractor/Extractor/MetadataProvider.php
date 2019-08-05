@@ -245,7 +245,11 @@ class MetadataProvider
                     "sanitizedName" => \Keboola\Utils\sanitizeColumnName($column['COLUMN_NAME']),
                     "type" => $column['DATA_TYPE'],
                     "length" => $this->getFieldLength($column),
-                    "nullable" => ($column['IS_NULLABLE'] === "YES" || $column['IS_NULLABLE'] === '1') ? true : false,
+                    "nullable" => (
+                        $column['IS_NULLABLE'] === "YES" ||
+                        $column['IS_NULLABLE'] === '1' ||
+                        substr($column['IS_NULLABLE'], 0, 1) === 'T'
+                        ) ? true : false,
                     "ordinalPosition" => (int) $column['ORDINAL_POSITION'],
                     "primaryKey" => false,
                 ];
@@ -259,7 +263,10 @@ class MetadataProvider
                 $tableDefs[$curTable]['columns'][$curColumnIndex]['primaryKey'] = true;
                 $tableDefs[$curTable]['columns'][$curColumnIndex]['primaryKeyName'] = $column['pk_name'];
             }
-            if (array_key_exists('is_identity', $column) && $column['is_identity']) {
+            if (array_key_exists('is_identity', $column) &&
+                !is_null($column['is_identity']) &&
+                substr($column['is_identity'], 0, 1) === 'T'
+            ) {
                 $tableDefs[$curTable]['columns'][$curColumnIndex]['autoIncrement'] = true;
             }
             if (array_key_exists('uk_name', $column) && $column['uk_name'] !== null) {
