@@ -19,8 +19,10 @@ services:
       - sshproxy
       - mssql
 
-  dev:
-    image: keboola/ex-db-mssql
+  dev: &dev-config
+    image: keboola/ex-db-mssql-dev
+    build:
+      context: .
     volumes:
       - .:/code
     command: composer ci
@@ -38,6 +40,11 @@ services:
     links:
       - sshproxy
       - mssql
+
+  dev-xdebug:
+    <<: *dev-config
+    image: keboola/ex-db-mssql-dev-xdebug
+    build: docker/xdebug
 
   mssql:
     image: microsoft/mssql-server-linux
