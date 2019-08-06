@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\DbExtractor\Extractor\DbAdapter;
 
-class MssqlOdbcStatement implements PdoStatementInterface
+class MssqlOdbcStatement extends \PDOStatement implements PdoStatementInterface
 {
     /** @var resource */
     private $stmt;
@@ -75,7 +75,7 @@ class MssqlOdbcStatement implements PdoStatementInterface
         return $result[odbc_field_name($this->stmt, $column_number + 1)];
     }
 
-    public function fetchAll($fetch_style = null, $fetch_argument = null, array $ctor_args = []): array
+    public function fetchAll($fetch_style = null, $fetch_argument = null, $ctor_args = null): array
     {
         $this->execute();
         $results = [];
@@ -85,7 +85,7 @@ class MssqlOdbcStatement implements PdoStatementInterface
         return $results;
     }
 
-    public function fetchObject($class_name = "stdClass", array $ctor_args = [])
+    public function fetchObject($class_name = "stdClass", $ctor_args = null)
     {
         throw new \Exception('Not implemented yet');
         return [];
@@ -141,8 +141,7 @@ class MssqlOdbcStatement implements PdoStatementInterface
 
     public function closeCursor(): bool
     {
-        throw new \Exception('Not implemented yet');
-        return false;
+        return true;
     }
 
     public function debugDumpParams(): void

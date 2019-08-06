@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Keboola\DbExtractor\Extractor\DbAdapter;
 
-use phpDocumentor\Reflection\Types\Mixed_;
-
 interface PdoInterface
 {
     public const ATTR_AUTOCOMMIT = 0;
@@ -189,7 +187,7 @@ interface PdoInterface
 
     public function __construct($dsn, $username = null, $passwd = null, $options = null);
 
-    public function prepare($statement, array $driver_options = []): PdoStatementInterface;
+    public function prepare($statement, $driver_options = null): PdoStatementInterface;
 
     public function beginTransaction(): bool;
 

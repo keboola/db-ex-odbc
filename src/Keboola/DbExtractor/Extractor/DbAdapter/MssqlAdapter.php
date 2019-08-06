@@ -60,7 +60,7 @@ class MssqlAdapter implements PdoInterface
         return $versionString['version'];
     }
 
-    public function prepare($statement, array $driver_options = []): PdoStatementInterface
+    public function prepare($statement, $driver_options = null): PdoStatementInterface
     {
         return new MssqlOdbcStatement(odbc_prepare($this->connection, $statement));
     }
