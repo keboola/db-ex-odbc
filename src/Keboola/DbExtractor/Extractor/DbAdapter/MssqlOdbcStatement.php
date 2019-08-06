@@ -23,7 +23,7 @@ class MssqlOdbcStatement implements PdoStatementInterface
         odbc_free_result($this->stmt);
     }
 
-    public function execute($bind = null)
+    public function execute($bind = null): bool
     {
         if ($bind === null) {
             $bind = [];
@@ -47,23 +47,25 @@ class MssqlOdbcStatement implements PdoStatementInterface
         $data_type = PdoInterface::PARAM_STR,
         $length = null,
         $driver_options = null
-    ) {
+    ): bool {
         throw new \Exception('Not implemented yet');
     }
 
-    public function bindColumn($column, &$param, $type = null, $maxlen = null, $driverdata = null)
+    public function bindColumn($column, &$param, $type = null, $maxlen = null, $driverdata = null): bool
     {
         throw new \Exception('Not implemented yet');
+        return false;
     }
 
-    public function bindValue($parameter, $value, $data_type = PdoInterface::PARAM_STR)
+    public function bindValue($parameter, $value, $data_type = PdoInterface::PARAM_STR): bool
     {
         throw new \Exception('Not implemented yet');
+        return false;
     }
 
-    public function rowCount()
+    public function rowCount(): int
     {
-        return odbc_num_rows();
+        return odbc_num_rows($this->stmt);
     }
 
     public function fetchColumn($column_number = 0)
@@ -73,7 +75,7 @@ class MssqlOdbcStatement implements PdoStatementInterface
         return $result[odbc_field_name($this->stmt, $column_number + 1)];
     }
 
-    public function fetchAll($fetch_style = null, $fetch_argument = null, array $ctor_args = [])
+    public function fetchAll($fetch_style = null, $fetch_argument = null, array $ctor_args = []): array
     {
         $this->execute();
         $results = [];
@@ -86,54 +88,64 @@ class MssqlOdbcStatement implements PdoStatementInterface
     public function fetchObject($class_name = "stdClass", array $ctor_args = [])
     {
         throw new \Exception('Not implemented yet');
+        return [];
     }
 
-    public function errorCode()
+    public function errorCode(): string
     {
         throw new \Exception('Not implemented yet');
+        return '';
     }
 
-    public function errorInfo()
+    public function errorInfo(): array
     {
         throw new \Exception('Not implemented yet');
+        return [];
     }
 
-    public function setAttribute($attribute, $value)
+    public function setAttribute($attribute, $value): bool
     {
         throw new \Exception('Not implemented yet');
+        return false;
     }
 
     public function getAttribute($attribute)
     {
         throw new \Exception('Not implemented yet');
+        return '';
     }
 
-    public function columnCount()
+    public function columnCount(): int
     {
         throw new \Exception('Not implemented yet');
+        return 0;
     }
 
-    public function getColumnMeta($column)
+    public function getColumnMeta($column): array
     {
         throw new \Exception('Not implemented yet');
+        return [];
     }
 
-    public function setFetchMode($mode, $classNameObject = null, array $ctorarfg = [])
+    public function setFetchMode($mode, $classNameObject = null, array $ctorarfg = []): bool
     {
         throw new \Exception('Not implemented yet');
+        return false;
     }
 
-    public function nextRowset()
+    public function nextRowset(): bool
     {
         throw new \Exception('Not implemented yet');
+        return false;
     }
 
-    public function closeCursor()
+    public function closeCursor(): bool
     {
         throw new \Exception('Not implemented yet');
+        return false;
     }
 
-    public function debugDumpParams()
+    public function debugDumpParams(): void
     {
         throw new \Exception('Not implemented yet');
     }

@@ -220,7 +220,7 @@ abstract class AbstractMSSQLTest extends ExtractorTest
                                     '/[\x00-\x08]/',            // 00-08
                                     '/\x0b/',                   // 11
                                     '/\x0c/',                   // 12
-                                    '/[\x0e-\x1f]/'             // 14-31
+                                    '/[\x0e-\x1f]/',            // 14-31
                                 ];
                                 foreach ($nonDisplayables as $regex) {
                                     $data = preg_replace($regex, '', $data);
@@ -251,7 +251,7 @@ abstract class AbstractMSSQLTest extends ExtractorTest
         $this->pdo->commit();
 
         $count = $this->pdo->query(sprintf('SELECT COUNT(*) AS itemsCount FROM %s', $tableName))->fetchColumn();
-        $this->assertEquals((int) $this->countTable($file), (int) $count);
+        $this->assertEquals($this->countTable($file), (int) $count);
     }
 
     /**

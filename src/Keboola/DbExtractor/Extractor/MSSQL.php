@@ -21,9 +21,6 @@ class MSSQL extends Extractor
     public const INCREMENT_TYPE_BINARY = 'binary';
     public const INCREMENT_TYPE_QUOTABLE = 'quotable';
 
-    /** @var  int */
-    private $sqlServerVersion;
-
     /** @var MetadataProvider */
     private $metadataProvider;
 
@@ -34,18 +31,7 @@ class MSSQL extends Extractor
     {
         parent::__construct($parameters, $state, $logger);
 
-        $this->sqlServerVersion = $this->getSqlServerVersion();
         $this->metadataProvider = new MetadataProvider($this->db);
-    }
-
-    private function getSqlServerVersion(): int
-    {
-        $versionString = $this->db->fetchServerVersion();
-        $versionParts = explode('.', $versionString);
-        $this->logger->info(
-            sprintf("Found database server version: %s", $versionString)
-        );
-        return (int) $versionParts[0];
     }
 
     public function createConnection(array $params): DbAdapter\MssqlAdapter
@@ -103,48 +89,6 @@ class MSSQL extends Extractor
             throw new ApplicationException(
                 sprintf("Error Stripping Nulls: %s", $process->getErrorOutput())
             );
-        }
-    }
-
-    private function getLastFetchedDatetimeValue(array $lastExportedLine, array $table, array $columnMetadata): string
-    {
-        $whereClause = "";
-        $whereValues = [];
-
-        foreach ($columnMetadata as $key => $column) {
-            if (strtoupper($column['type']) === "TIMESTAMP") {
-                continue;
-            }
-            if ($whereClause !== "") {
-                $whereClause .= " AND ";
-            }
-            if (in_array(strtoupper($column['type']), ["DATETIME", "DATETIME2"])) {
-                $whereClause .= "CONVERT(DATETIME2(0), " . $this->db->quoteIdentifier($column['name']) . ") = ?";
-            } else {
-                $whereClause .= $this->db->quoteIdentifier($column['name']) . " = ?";
-            }
-            $whereValues[] = $lastExportedLine[$key];
-        }
-        $query = sprintf(
-            "SELECT %s FROM %s.%s WHERE %s;",
-            $this->db->quoteIdentifier($this->incrementalFetching['column']),
-            $this->db->quoteIdentifier($table['schema']),
-            $this->db->quoteIdentifier($table['tableName']),
-            $whereClause
-        );
-        $stmt = $this->db->prepare($query);
-        $stmt->execute($whereValues);
-        $lastDatetimeRow = $stmt->fetch(PdoInterface::FETCH_ASSOC);
-        return $lastDatetimeRow[$this->incrementalFetching['column']];
-    }
-
-    private function getLastFetchedId(array $columnMetadata, array $lastExportedLine): string
-    {
-        $incrementalFetchingColumnIndex = null;
-        foreach ($columnMetadata as $key => $column) {
-            if ($column['name'] === $this->incrementalFetching['column']) {
-                return $lastExportedLine[$key];
-            }
         }
     }
 

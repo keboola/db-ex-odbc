@@ -26,12 +26,11 @@ class MssqlAdapter implements PdoInterface
         $this->query('SELECT GETDATE() AS CurrentDateTime');
     }
 
-    public function query($statement, $bind = [], $mode = 19, $arg3 = null, array $ctorargs = []): MssqlOdbcStatement
+    public function query($statement, $bind = [], $mode = 19, $arg3 = null, array $ctorargs = []): PdoStatementInterface
     {
         try {
             return $this->prepare($statement);
         } catch (\Throwable $e) {
-            var_dump($statement);
             throw new ApplicationException($e->getMessage(), 0, $e);
         }
     }
@@ -61,56 +60,61 @@ class MssqlAdapter implements PdoInterface
         return $versionString['version'];
     }
 
-    public function prepare($statement, array $driver_options = []): MssqlOdbcStatement
+    public function prepare($statement, array $driver_options = []): PdoStatementInterface
     {
         return new MssqlOdbcStatement(odbc_prepare($this->connection, $statement));
     }
 
-    public function beginTransaction()
+    public function beginTransaction(): bool
     {
-        odbc_autocommit($this->connection, 0);
+        return odbc_autocommit($this->connection, 0);
     }
 
-    public function commit()
+    public function commit(): bool
     {
-        odbc_commit($this->connection);
+        return odbc_commit($this->connection);
     }
 
-    public function rollBack()
+    public function rollBack(): bool
     {
-        odbc_rollback($this->connection);
+        return odbc_rollback($this->connection);
     }
 
-    public function inTransaction()
-    {
-        throw new \Exception('Not implemented yet');
-    }
-
-    public function setAttribute($attribute, $value)
+    public function inTransaction(): bool
     {
         throw new \Exception('Not implemented yet');
+        return false;
     }
 
-    public function exec($statement)
+    public function setAttribute($attribute, $value): bool
+    {
+        throw new \Exception('Not implemented yet');
+        return false;
+    }
+
+    public function exec($statement): void
     {
         $stmt = $this->query($statement);
 //        var_dump($statement);
         $stmt->execute();
     }
 
-    public function lastInsertId($name = null)
+    public function lastInsertId($name = null): string
     {
         throw new \Exception('Not implemented yet');
+        return '';
     }
 
-    public function errorCode()
+    public function errorCode(): string
     {
         throw new \Exception('Not implemented yet');
+        return '';
     }
 
-    public function errorInfo()
+    public function errorInfo(): array
     {
         throw new \Exception('Not implemented yet');
+        return [];
     }
 
     public function getAttribute($attribute)

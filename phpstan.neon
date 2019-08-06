@@ -1,2 +1,3 @@
 parameters:
     ignoreErrors:
+        - '#Constructor of class Keboola\\DbExtractor\\Extractor\\DbAdapter\\MssqlAdapter has an unused parameter \$options\.#'

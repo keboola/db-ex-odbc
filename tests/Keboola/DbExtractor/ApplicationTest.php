@@ -407,10 +407,9 @@ class ApplicationTest extends AbstractMSSQLTest
         sleep(2);
         //now add a couple rows and run it again.
         $this->pdo->exec(sprintf(
-                'INSERT INTO %s.dbo.[auto Increment Timestamp] ([Weir%%d Na-me], [smalldatetime]) VALUES (\'charles\', null), (\'william\', \'2012-01-10 10:55\')',
-                $config['parameters']['db']['database']
-            )
-        );
+            'INSERT INTO %s.dbo.[auto Increment Timestamp] ([Weir%%d Na-me], [smalldatetime]) VALUES (\'charles\', null), (\'william\', \'2012-01-10 10:55\')',
+            $config['parameters']['db']['database']
+        ));
 
         if (!is_dir($this->dataDir . '/in')) {
             mkdir($this->dataDir . '/in');
