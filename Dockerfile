@@ -16,7 +16,8 @@ RUN apt-get update -q \
     libstdc++6 \
     zlib1g \
     libgcc1 \
-    expect
+    expect \
+  && rm -rf /var/lib/apt/lists/*
 
 RUN set -x \
     && docker-php-source extract \
