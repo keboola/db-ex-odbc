@@ -376,12 +376,16 @@ class MSSQL extends Extractor
         $incrementalAddon = null;
         if ($this->incrementalFetching) {
             if (isset($this->state['lastFetchedRow'])) {
+                $lastFetchedRow = $this->state['lastFetchedRow'];
+                if ($this->incrementalFetching['type'] == self::INCREMENT_TYPE_BINARY) {
+                    $lastFetchedRow = '0x' . bin2hex($lastFetchedRow);
+                }
                 $incrementalAddon = sprintf(
                     " WHERE %s >= %s",
                     $this->db->quoteIdentifier($this->incrementalFetching['column']),
                     $this->shouldQuoteComparison($this->incrementalFetching['type'])
-                        ? $this->db->quote($this->state['lastFetchedRow'])
-                        : $this->state['lastFetchedRow']
+                        ? $this->db->quote($lastFetchedRow)
+                        : $lastFetchedRow
                 );
             }
             $incrementalAddon .= sprintf(" ORDER BY %s", $this->db->quoteIdentifier($this->incrementalFetching['column']));
