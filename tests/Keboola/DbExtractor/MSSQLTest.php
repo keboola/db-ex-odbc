@@ -1586,18 +1586,17 @@ class MSSQLTest extends AbstractMSSQLTest
 
     public function testMultipleSelectStatements(): void
     {
-        $this->markTestSkipped();
         $config = $this->getConfig(self::DRIVER);
         unset($config['parameters']['tables'][1]);
         unset($config['parameters']['tables'][2]);
         unset($config['parameters']['tables'][3]);
         unset($config['parameters']['tables'][0]['table']);
-        $config['parameters']['tables'][0]['query'] = "SELECT usergender INTO #temptable FROM sales WHERE usergender LIKE 'undefined';  SELECT * FRoM sales WHERE usergender IN (SELECT * FROM #temptable);";
+        $config['parameters']['tables'][0]['query'] = "DROP TABLE IF EXISTS #temptable; SELECT usergender INTO #temptable FROM sales WHERE usergender LIKE 'undefined';  SELECT * FRoM sales WHERE usergender IN (SELECT * FROM #temptable);";
         $config['parameters']['tables'][0]['outputTable'] = 'in.c-main.multipleselect_test';
 
         $this->setExpectedException(
             UserException::class,
-            "Failed to retrieve results: SQLSTATE[IMSSP]: The active result for the query contains no fields. Code:IMSSP"
+            "odbc_fetch_array(): No tuples available at this result index"
         );
         $this->createApplication($config)->run();
     }
