@@ -2,7 +2,7 @@ version: "2"
 services:
   app:
     build: .
-    image: keboola/ex-db-odbc-mssql
+    image: keboola/ex-db-mssql-cdata
     command: composer ci
     tty: true
     stdin_open: true
@@ -20,7 +20,7 @@ services:
       - mssql
 
   dev: &dev-config
-    image: keboola/ex-db-odbc-mssql-dev
+    image: keboola/ex-db-mssql-cdata-dev
     build:
       context: .
     volumes:
@@ -43,7 +43,7 @@ services:
 
   dev-xdebug:
     <<: *dev-config
-    image: keboola/ex-db-odbc-mssql-dev-xdebug
+    image: keboola/ex-db-mssql-cdata-dev-xdebug
     build: docker/xdebug
 
   mssql:
