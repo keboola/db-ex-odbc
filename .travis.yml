@@ -11,19 +11,19 @@ install:
   - docker-compose run --rm app
 
 before_script:
-  - docker pull quay.io/keboola/developer-portal-cli-v2:latest
-  - export REPOSITORY=`docker run --rm -e KBC_DEVELOPERPORTAL_USERNAME -e KBC_DEVELOPERPORTAL_PASSWORD quay.io/keboola/developer-portal-cli-v2:latest ecr:get-repository keboola $KBC_DEVELOPERPORTAL_APP`
-  - docker tag $APP_IMAGE:latest $REPOSITORY:master
-  - eval $(docker run --rm -e KBC_DEVELOPERPORTAL_USERNAME -e KBC_DEVELOPERPORTAL_PASSWORD quay.io/keboola/developer-portal-cli-v2:latest ecr:get-login keboola $KBC_DEVELOPERPORTAL_APP)
-  - docker push $REPOSITORY:master
+  # - docker pull quay.io/keboola/developer-portal-cli-v2:latest
+  # - export REPOSITORY=`docker run --rm -e KBC_DEVELOPERPORTAL_USERNAME -e KBC_DEVELOPERPORTAL_PASSWORD quay.io/keboola/developer-portal-cli-v2:latest ecr:get-repository keboola $KBC_DEVELOPERPORTAL_APP`
+  # - docker tag $APP_IMAGE:latest $REPOSITORY:master
+  # - eval $(docker run --rm -e KBC_DEVELOPERPORTAL_USERNAME -e KBC_DEVELOPERPORTAL_PASSWORD quay.io/keboola/developer-portal-cli-v2:latest ecr:get-login keboola $KBC_DEVELOPERPORTAL_APP)
+  # - docker push $REPOSITORY:master
   # Run live test job on new master image
-  - docker pull quay.io/keboola/syrup-cli:latest
-  - travis_wait docker run --rm -e KBC_STORAGE_TOKEN quay.io/keboola/syrup-cli:latest run-job $KBC_DEVELOPERPORTAL_APP 287615945 master
-  - travis_wait docker run --rm -e KBC_STORAGE_TOKEN quay.io/keboola/syrup-cli:latest run-job $KBC_DEVELOPERPORTAL_APP 287628364 master
+  # - docker pull quay.io/keboola/syrup-cli:latest
+  # - travis_wait docker run --rm -e KBC_STORAGE_TOKEN quay.io/keboola/syrup-cli:latest run-job $KBC_DEVELOPERPORTAL_APP 287615945 master
+  # - travis_wait docker run --rm -e KBC_STORAGE_TOKEN quay.io/keboola/syrup-cli:latest run-job $KBC_DEVELOPERPORTAL_APP 287628364 master
   # Run a test on sql server 2008
-  - travis_wait docker run --rm -e KBC_STORAGE_TOKEN quay.io/keboola/syrup-cli:latest run-job $KBC_DEVELOPERPORTAL_APP 402532849 master
+  # - travis_wait docker run --rm -e KBC_STORAGE_TOKEN quay.io/keboola/syrup-cli:latest run-job $KBC_DEVELOPERPORTAL_APP 402532849 master
   # Test Azure DB
-  - travis_wait docker run --rm -e KBC_STORAGE_TOKEN quay.io/keboola/syrup-cli:latest run-job $KBC_DEVELOPERPORTAL_APP 430354652 master
+  # - travis_wait docker run --rm -e KBC_STORAGE_TOKEN quay.io/keboola/syrup-cli:latest run-job $KBC_DEVELOPERPORTAL_APP 430354652 master
 
 deploy:
   provider: script
