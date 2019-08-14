@@ -130,15 +130,6 @@ abstract class AbstractMSSQLTest extends ExtractorTest
     public function getConfig(string $driver = self::DRIVER, string $format = ExtractorTest::CONFIG_FORMAT_YAML): array
     {
         $config = parent::getConfig($driver, $format);
-        $config['parameters']['db']['rtk'] = $this->getEnv($driver, 'RTK_LICENSE');
-        return $config;
-    }
-
-    protected function getConfigRow(string $driver): array
-    {
-        $config = parent::getConfigRow($driver);
-        $config['parameters']['db']['rtk'] = $this->getEnv($driver, 'RTK_LICENSE');
-
         return $config;
     }
 
