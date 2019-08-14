@@ -53,7 +53,7 @@ class MSSQL extends Extractor
         $host .= empty($params['instance']) ? '' : '\\\\' . $params['instance'];
         $options[] = 'Server=' . $host;
         $options[] = 'Database=' . $params['database'];
-        $options[] = 'RTK=' . $params['rtk'];
+        $options[] = 'RTK=' . getenv('MSSQL_RTK_LICENSE');
         $dsn = sprintf("DRIVER={CData ODBC Driver for SQL Server};%s", implode(';', $options));
         $this->logger->info("Connecting to DSN '" . $dsn . "'");
 

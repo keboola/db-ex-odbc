@@ -1,7 +1,10 @@
 version: "2"
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        MSSQL_RTK_LICENSE_BUILD_ARG: $MSSQL_RTK_LICENSE
     image: keboola/ex-db-mssql-cdata
     command: composer ci
     tty: true
@@ -9,7 +12,6 @@ services:
     env_file:
       - ssh-keys.env
     environment:
-      MSSQL_RTK_LICENSE: 52554445555A303830313139333057454254523141310000000000000000000000000000000000004546324A4452313200004D353038374E57475A5A52440000
       MSSQL_DB_HOST: mssql
       MSSQL_DB_PORT: 1433
       MSSQL_DB_USER: sa
@@ -23,6 +25,8 @@ services:
     image: keboola/ex-db-mssql-cdata-dev
     build:
       context: .
+      args:
+        MSSQL_RTK_LICENSE_BUILD_ARG: $MSSQL_RTK_LICENSE
     volumes:
       - .:/code
     command: composer ci
@@ -31,7 +35,6 @@ services:
     env_file:
       - ssh-keys.env
     environment:
-      MSSQL_RTK_LICENSE: 52554445555A303830313139333057454254523141310000000000000000000000000000000000004546324A4452313200004D353038374E57475A5A52440000
       MSSQL_DB_HOST: mssql
       MSSQL_DB_PORT: 1433
       MSSQL_DB_USER: sa

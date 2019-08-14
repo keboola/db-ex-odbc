@@ -41,7 +41,11 @@ abstract class AbstractMSSQLTest extends ExtractorTest
 
         // create test database
         $this->pdo = new MssqlAdapter(
-            sprintf("DRIVER={CData ODBC Driver for SQL Server};Verbosity=5;Logfile=mssql.log;Server=%s;RTK=%s", $params['host'], $params['rtk']),
+            sprintf(
+                "DRIVER={CData ODBC Driver for SQL Server};Verbosity=5;Logfile=mssql.log;Server=%s;RTK=%s",
+                $params['host'],
+                $this->getEnv(self::DRIVER, 'RTK_LICENSE')
+            ),
             $params['user'],
             $params['password']
         );

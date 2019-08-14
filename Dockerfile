@@ -2,8 +2,10 @@ FROM php:7.2-cli-stretch
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG COMPOSER_FLAGS="--prefer-dist --no-interaction"
+ARG MSSQL_RTK_LICENSE_BUILD_ARG
 ENV COMPOSER_ALLOW_SUPERUSER=1
 ENV COMPOSER_PROCESS_TIMEOUT 3600
+ENV MSSQL_RTK_LICENSE=$MSSQL_RTK_LICENSE_BUILD_ARG
 
 RUN apt-get update -q \
   && apt-get install -y --no-install-recommends \
