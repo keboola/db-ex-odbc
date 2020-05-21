@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Keboola\DbExtractor\Tests;
 
-use Keboola\DbExtractor\Extractor\MSSQL;
+use Keboola\DbExtractor\Extractor\ODBC;
 use Keboola\DbExtractor\Logger;
 
 class ExtractorTest extends AbstractMSSQLTest
@@ -23,7 +23,7 @@ class ExtractorTest extends AbstractMSSQLTest
      */
     public function testGetSimplifiedPdoQuery(array $params, array $state, string $expected): void
     {
-        $extractor = new MSSQL($this->config['parameters'], $state, new Logger('mssql-extractor-test'));
+        $extractor = new ODBC($this->config['parameters'], $state, new Logger('mssql-extractor-test'));
 
         if (isset($params['incrementalFetchingColumn']) && $params['incrementalFetchingColumn'] !== "") {
             $extractor->validateIncrementalFetching(
@@ -43,7 +43,7 @@ class ExtractorTest extends AbstractMSSQLTest
      */
     public function testColumnCasting(array $column, array $expectedSql): void
     {
-        $extractor = new MSSQL($this->config['parameters'], [], new Logger('mssql-extractor-test'));
+        $extractor = new ODBC($this->config['parameters'], [], new Logger('mssql-extractor-test'));
         $this->assertEquals($expectedSql['bcp'], $extractor->columnToBcpSql($column));
         $this->assertEquals($expectedSql['pdo'], $extractor->columnToPdoSql($column));
     }

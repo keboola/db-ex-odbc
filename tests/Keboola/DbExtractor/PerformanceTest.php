@@ -7,7 +7,7 @@ namespace Keboola\DbExtractor\Tests;
 use Keboola\Csv\CsvFile;
 use Keboola\DbExtractor\Exception\UserException;
 use Symfony\Component\Process\Process;
-use Keboola\DbExtractor\MSSQLApplication;
+use Keboola\DbExtractor\OdbcApplication;
 
 class PerformanceTest extends AbstractMSSQLTest
 {

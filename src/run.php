@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Keboola\DbExtractor\MSSQLApplication;
+use Keboola\DbExtractor\OdbcApplication;
 use Keboola\DbExtractor\Exception\ApplicationException;
 use Keboola\DbExtractor\Exception\UserException;
 use Keboola\DbExtractor\Logger;
@@ -40,7 +40,7 @@ try {
         $inputState = json_decode(file_get_contents($inputStateFile), true);
     }
 
-    $app = new MSSQLApplication(
+    $app = new OdbcApplication(
         $config,
         $logger,
         $inputState,

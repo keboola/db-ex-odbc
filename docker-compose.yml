@@ -4,7 +4,7 @@ services:
     build:
       context: .
       args:
-        MSSQL_RTK_LICENSE_BUILD_ARG: $MSSQL_RTK_LICENSE
+        RTK_LICENSE_BUILD_ARG: $RTK_LICENSE
     image: keboola/ex-db-mssql-cdata
     command: composer ci
     tty: true
@@ -17,16 +17,13 @@ services:
       MSSQL_DB_USER: sa
       MSSQL_DB_PASSWORD: "yourStrong(!)Password"
       MSSQL_DB_DATABASE: test
-    links:
-      - sshproxy
-      - mssql
 
   dev: &dev-config
     image: keboola/ex-db-mssql-cdata-dev
     build:
       context: .
       args:
-        MSSQL_RTK_LICENSE_BUILD_ARG: $MSSQL_RTK_LICENSE
+        RTK_LICENSE_BUILD_ARG: $RTK_LICENSE
     volumes:
       - .:/code
     command: composer ci
@@ -40,29 +37,3 @@ services:
       MSSQL_DB_USER: sa
       MSSQL_DB_PASSWORD: "yourStrong(!)Password"
       MSSQL_DB_DATABASE: test
-    links:
-      - sshproxy
-      - mssql
-
-  dev-xdebug:
-    <<: *dev-config
-    image: keboola/ex-db-mssql-cdata-dev-xdebug
-    build: docker/xdebug
-
-  mssql:
-    image: microsoft/mssql-server-linux
-    environment:
-      ACCEPT_EULA: Y
-      SA_PASSWORD: "yourStrong(!)Password"
-    ports:
-      - "1433:1433"
-
-  sshproxy:
-    build: ./tests/env/sshproxy
-    volumes:
-        - ./tests/env/sshproxy:/code
-    working_dir: /code
-    ports:
-      - "2222:22"
-    links:
-      - mssql

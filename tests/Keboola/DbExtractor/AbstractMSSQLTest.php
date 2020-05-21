@@ -6,7 +6,7 @@ namespace Keboola\DbExtractor\Tests;
 
 use Keboola\DbExtractor\Extractor\DbAdapter\MssqlAdapter;
 use Keboola\DbExtractor\Extractor\DbAdapter\PdoInterface;
-use Keboola\DbExtractor\MSSQLApplication;
+use Keboola\DbExtractor\OdbcApplication;
 use Keboola\DbExtractor\Test\ExtractorTest;
 use Keboola\Csv\CsvFile;
 use Keboola\DbExtractor\Logger;
@@ -268,10 +268,10 @@ abstract class AbstractMSSQLTest extends ExtractorTest
         return $linesCount;
     }
 
-    public function createApplication(array $config, array $state = []): MSSQLApplication
+    public function createApplication(array $config, array $state = []): OdbcApplication
     {
         $logger = new Logger('ex-db-mssql-tests');
-        $app = new MSSQLApplication($config, $logger, $state, $this->dataDir);
+        $app = new OdbcApplication($config, $logger, $state, $this->dataDir);
         return $app;
     }
 

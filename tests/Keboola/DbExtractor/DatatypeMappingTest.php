@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Keboola\DbExtractor\Tests;
 
 use Keboola\DbExtractor\Extractor\MssqlDataType;
-use Keboola\DbExtractor\Extractor\MSSQL;
+use Keboola\DbExtractor\Extractor\ODBC;
 
 class DatatypeMappingTest extends \PHPUnit_Framework_TestCase
 {
@@ -18,7 +18,7 @@ class DatatypeMappingTest extends \PHPUnit_Framework_TestCase
     {
         $datatype = new MssqlDataType(
             $testColumn['type'],
-            array_intersect_key($testColumn, array_flip(MSSQL::DATATYPE_KEYS))
+            array_intersect_key($testColumn, array_flip(ODBC::DATATYPE_KEYS))
         );
         $datatypeMetadata = $datatype->toMetadata();
         $this->assertEquals($expectedMetadtata, $datatypeMetadata);

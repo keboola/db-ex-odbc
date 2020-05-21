@@ -2,10 +2,10 @@ FROM php:7.2-cli-stretch
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG COMPOSER_FLAGS="--prefer-dist --no-interaction"
-ARG MSSQL_RTK_LICENSE_BUILD_ARG
+ARG RTK_LICENSE_BUILD_ARG
 ENV COMPOSER_ALLOW_SUPERUSER=1
 ENV COMPOSER_PROCESS_TIMEOUT 3600
-ENV MSSQL_RTK_LICENSE=$MSSQL_RTK_LICENSE_BUILD_ARG
+ENV RTK_LICENSE=$RTK_LICENSE_BUILD_ARG
 
 RUN apt-get update -q \
   && apt-get install -y --no-install-recommends \
@@ -30,11 +30,11 @@ RUN set -x \
     && docker-php-ext-install odbc \
     && docker-php-source delete
 
-COPY docker/SQLServerODBCDriverforUnix.deb /tmp/odbc.deb
+COPY docker/NetSuiteODBCDriver.deb /tmp/odbc.deb
 #COPY docker/odbcinst.ini /etc/odbcinst.ini
 RUN dpkg -i /tmp/odbc.deb
-COPY docker/license /opt/cdata/cdata-odbc-driver-for-sql/bin/license
-WORKDIR /opt/cdata/cdata-odbc-driver-for-sql/bin/
+COPY docker/license /opt/cdata/cdata-odbc-driver-for-netsuite/bin/license
+WORKDIR /opt/cdata/cdata-odbc-driver-for-netsuite/bin/
 RUN ./license
 RUN odbcinst -q -d
 
